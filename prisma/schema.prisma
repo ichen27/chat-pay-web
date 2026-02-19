@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  PAYMENT_SENT
+  PAYMENT_REQUEST
+  SYSTEM
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  DECLINED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  displayName  String
+  avatarUrl    String?
+  passwordHash String
+  balance      Float    @default(0)
+  createdAt    DateTime @default(now())
+
+  conversations ConversationMember[]
+  sentMessages  Message[]
+  sentPayments     Payment[] @relation("PaymentSender")
+  receivedPayments Payment[] @relation("PaymentReceiver")
+  contacts         Contact[] @relation("UserContacts")
+  contactOf        Contact[] @relation("ContactOf")
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members  ConversationMember[]
+  messages Message[]
+  payments Payment[]
+}
+
+model ConversationMember {
+  id             String   @id @default(cuid())
+  conversationId String
+  userId         String
+  joinedAt       DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String      @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String?
+  imageUrl       String?
+  type           MessageType @default(TEXT)
+  createdAt      DateTime    @default(now())
+  readBy         String      @default("[]")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  sender       User         @relation(fields: [senderId], references: [id])
+  payment      Payment?
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  conversationId String
+  senderId       String
+  receiverId     String
+  amount         Float
+  note           String?
+  status         PaymentStatus @default(PENDING)
+  messageId      String        @unique
+  createdAt      DateTime      @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  sender       User         @relation("PaymentSender", fields: [senderId], references: [id])
+  receiver     User         @relation("PaymentReceiver", fields: [receiverId], references: [id])
+  message      Message      @relation(fields: [messageId], references: [id])
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  userId    String
+  contactId String
+  createdAt DateTime @default(now())
+
+  user    User @relation("UserContacts", fields: [userId], references: [id])
+  contact User @relation("ContactOf", fields: [contactId], references: [id])
+
+  @@unique([userId, contactId])
+}

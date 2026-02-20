@@ -40,12 +40,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      fetchUser(token).finally(() => setIsLoading(false));
-    } else {
+    const restoreSession = async () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        await fetchUser(token);
+      }
       setIsLoading(false);
-    }
+    };
+
+    void restoreSession();
   }, [fetchUser]);
 
   const login = async (email: string, password: string) => {

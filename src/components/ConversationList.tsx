@@ -35,23 +35,29 @@ export default function ConversationList({ onSelect, selectedId }: ConversationL
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("Not authenticated");
-      setLoading(false);
-      return;
-    }
+    const loadConversations = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Not authenticated");
+        setLoading(false);
+        return;
+      }
 
-    fetch("/api/conversations", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(async (res) => {
+      try {
+        const res = await fetch("/api/conversations", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (!res.ok) throw new Error("Failed to load conversations");
         const data = await res.json();
         setConversations(data.conversations);
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadConversations();
   }, []);
 
   return (

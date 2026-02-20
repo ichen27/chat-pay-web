@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, signToken } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/admin";
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,7 +28,13 @@ export async function POST(req: NextRequest) {
     const passwordHash = await hashPassword(password);
 
     const user = await prisma.user.create({
-      data: { email, username, displayName, passwordHash },
+      data: {
+        email,
+        username,
+        displayName,
+        passwordHash,
+        role: isAdminEmail(email) ? "ADMIN" : "USER",
+      },
     });
 
     const token = signToken(user.id);
@@ -39,6 +46,7 @@ export async function POST(req: NextRequest) {
         email: user.email,
         username: user.username,
         displayName: user.displayName,
+        role: user.role,
       },
     });
   } catch {

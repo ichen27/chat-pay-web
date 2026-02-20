@@ -22,6 +22,23 @@ enum PaymentStatus {
   CANCELLED
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum VideoSessionStatus {
+  ACTIVE
+  ENDED
+}
+
+enum VideoSignalType {
+  OFFER
+  ANSWER
+  ICE
+  PEER_LEFT
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -30,6 +47,7 @@ model User {
   avatarUrl    String?
   passwordHash String
   balance      Float    @default(0)
+  role         UserRole @default(USER)
   createdAt    DateTime @default(now())
 
   conversations ConversationMember[]
@@ -38,6 +56,8 @@ model User {
   receivedPayments Payment[] @relation("PaymentReceiver")
   contacts         Contact[] @relation("UserContacts")
   contactOf        Contact[] @relation("ContactOf")
+  ownedVideoServers VideoServer[] @relation("VideoServerOwner")
+  videoQueueEntries VideoQueueEntry[]
 }
 
 model Conversation {
@@ -104,4 +124,65 @@ model Contact {
   contact User @relation("ContactOf", fields: [contactId], references: [id])
 
   @@unique([userId, contactId])
+}
+
+model VideoServer {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  isActive    Boolean  @default(true)
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy    User               @relation("VideoServerOwner", fields: [createdById], references: [id])
+  queueEntries VideoQueueEntry[]
+  sessions     VideoSession[]
+}
+
+model VideoQueueEntry {
+  id          String   @id @default(cuid())
+  serverId    String
+  userId      String   @unique
+  createdAt   DateTime @default(now())
+  heartbeatAt DateTime @default(now())
+
+  server VideoServer @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([serverId, createdAt])
+}
+
+model VideoSession {
+  id         String             @id @default(cuid())
+  serverId   String
+  userAId    String
+  userBId    String
+  status     VideoSessionStatus @default(ACTIVE)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  endedAt    DateTime?
+  endedReason String?
+
+  server  VideoServer   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  signals VideoSignal[]
+
+  @@index([serverId, status, updatedAt])
+  @@index([userAId, status])
+  @@index([userBId, status])
+}
+
+model VideoSignal {
+  id        Int             @id @default(autoincrement())
+  sessionId String
+  fromUserId String
+  toUserId  String
+  type      VideoSignalType
+  payload   String
+  createdAt DateTime        @default(now())
+  consumedAt DateTime?
+
+  session VideoSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, toUserId, id])
 }

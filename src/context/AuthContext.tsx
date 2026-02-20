@@ -7,6 +7,7 @@ interface User {
   email: string;
   username: string;
   displayName: string;
+  role?: "USER" | "ADMIN";
   avatarUrl?: string | null;
   balance?: number;
   createdAt?: string;

@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
         displayName: true,
         avatarUrl: true,
         balance: true,
+        role: true,
         createdAt: true,
       },
     });

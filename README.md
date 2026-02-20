@@ -1,5 +1,25 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Video Runtime Architecture
+
+The app now includes modular video chat servers and an admin monitoring dashboard:
+
+- `GET/POST /api/video/servers`: list and create video server modules.
+- `GET/POST /api/video/match`: distributed queue + match state per server module.
+- `GET/POST /api/video/signal`: WebRTC signaling relay (offer/answer/ICE).
+- `GET /api/admin/video/overview`: global management metrics across all servers.
+- UI routes:
+  - `/video` for end-user random cam chat.
+  - `/admin/video` for admin monitoring.
+
+State is persisted via Prisma models (`VideoServer`, `VideoQueueEntry`, `VideoSession`, `VideoSignal`) so multiple app runtimes can coordinate through a shared database.
+
+For production horizontal scaling, use a shared production database (typically Postgres) for all runtimes.
+
+### Admin Access
+
+Set `ADMIN_EMAILS` (comma-separated) in `.env` to grant dashboard access and auto-assign admin role on registration.
+
 ## Getting Started
 
 First, run the development server:

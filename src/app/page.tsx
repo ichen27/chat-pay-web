@@ -32,7 +32,23 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen">
+    <div className="relative flex h-screen">
+      <button
+        type="button"
+        onClick={() => router.push("/video")}
+        className="absolute right-4 top-4 z-20 rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-500"
+      >
+        Video Chat
+      </button>
+      {user.role === "ADMIN" ? (
+        <button
+          type="button"
+          onClick={() => router.push("/admin/video")}
+          className="absolute right-32 top-4 z-20 rounded-md bg-zinc-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-600"
+        >
+          Admin
+        </button>
+      ) : null}
       <ConversationList
         selectedId={selectedConversationId}
         onSelect={setSelectedConversationId}

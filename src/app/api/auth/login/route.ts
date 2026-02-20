@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
         email: user.email,
         username: user.username,
         displayName: user.displayName,
+        role: user.role,
       },
     });
   } catch {
